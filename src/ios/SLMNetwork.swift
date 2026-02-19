@@ -1,8 +1,9 @@
+import Foundation
 import Network
 
 @objc(SLMNetwork) class SLMNetwork: CDVPlugin {
 
-    private var pathMonitor: NWPathMonitor?
+    private var pathMonitorRef: Any?
     private var monitorQueue: DispatchQueue?
     private var monitorCallbackId: String?
 
@@ -10,51 +11,78 @@ import Network
 
     @objc(getConnectionInfo:)
     func getConnectionInfo(command: CDVInvokedUrlCommand) {
-        let monitor = NWPathMonitor()
-        let queue = DispatchQueue(label: "com.slm.network.oneshot")
+        if #available(iOS 12.0, *) {
+            let monitor = NWPathMonitor()
+            let queue = DispatchQueue(label: "com.slm.network.oneshot")
 
-        monitor.pathUpdateHandler = { path in
-            monitor.cancel()
+            monitor.pathUpdateHandler = { path in
+                monitor.cancel()
 
-            let info = self.buildNetworkInfo(path)
+                let info = self.buildNetworkInfo(path)
+                let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: info)
+                self.commandDelegate.send(result, callbackId: command.callbackId)
+            }
+
+            monitor.start(queue: queue)
+        } else {
+            let info: [String: Any] = [
+                "type": "unknown",
+                "isConnected": true,
+                "isExpensive": false,
+                "details": [
+                    "isConstrained": false,
+                    "supportsDNS": true,
+                    "supportsIPv4": true,
+                    "supportsIPv6": true
+                ]
+            ]
             let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: info)
-            self.commandDelegate.send(result, callbackId: command.callbackId)
+            commandDelegate.send(result, callbackId: command.callbackId)
         }
-
-        monitor.start(queue: queue)
     }
 
     // MARK: - startMonitoring
 
     @objc(startMonitoring:)
     func startMonitoring(command: CDVInvokedUrlCommand) {
-        // Detener monitor anterior si existe
-        pathMonitor?.cancel()
+        if #available(iOS 12.0, *) {
+            // Detener monitor anterior si existe
+            if let existing = pathMonitorRef as? NWPathMonitor {
+                existing.cancel()
+            }
 
-        monitorCallbackId = command.callbackId
-        let monitor = NWPathMonitor()
-        let queue = DispatchQueue(label: "com.slm.network.monitor")
+            monitorCallbackId = command.callbackId
+            let monitor = NWPathMonitor()
+            let queue = DispatchQueue(label: "com.slm.network.monitor")
 
-        monitor.pathUpdateHandler = { [weak self] path in
-            guard let self = self, let callbackId = self.monitorCallbackId else { return }
+            monitor.pathUpdateHandler = { [weak self] path in
+                guard let self = self, let callbackId = self.monitorCallbackId else { return }
 
-            let info = self.buildNetworkInfo(path)
-            let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: info)
-            result?.setKeepCallbackAs(true)
-            self.commandDelegate.send(result, callbackId: callbackId)
+                let info = self.buildNetworkInfo(path)
+                let result = CDVPluginResult(status: CDVCommandStatus_OK, messageAs: info)
+                result?.setKeepCallbackAs(true)
+                self.commandDelegate.send(result, callbackId: callbackId)
+            }
+
+            monitor.start(queue: queue)
+            self.pathMonitorRef = monitor
+            self.monitorQueue = queue
+        } else {
+            let result = CDVPluginResult(status: CDVCommandStatus_ERROR, messageAs: "Network monitoring requires iOS 12.0+")
+            commandDelegate.send(result, callbackId: command.callbackId)
         }
-
-        monitor.start(queue: queue)
-        self.pathMonitor = monitor
-        self.monitorQueue = queue
     }
 
     // MARK: - stopMonitoring
 
     @objc(stopMonitoring:)
     func stopMonitoring(command: CDVInvokedUrlCommand) {
-        pathMonitor?.cancel()
-        pathMonitor = nil
+        if #available(iOS 12.0, *) {
+            if let monitor = pathMonitorRef as? NWPathMonitor {
+                monitor.cancel()
+            }
+        }
+        pathMonitorRef = nil
         monitorQueue = nil
         monitorCallbackId = nil
 
@@ -65,6 +93,7 @@ import Network
 
     // MARK: - Helpers
 
+    @available(iOS 12.0, *)
     private func buildNetworkInfo(_ path: NWPath) -> [String: Any] {
         var type = "none"
         var isConnected = false
@@ -98,8 +127,12 @@ import Network
     }
 
     override func onReset() {
-        pathMonitor?.cancel()
-        pathMonitor = nil
+        if #available(iOS 12.0, *) {
+            if let monitor = pathMonitorRef as? NWPathMonitor {
+                monitor.cancel()
+            }
+        }
+        pathMonitorRef = nil
         monitorQueue = nil
         monitorCallbackId = nil
     }
