@@ -111,8 +111,13 @@ import Network
             }
         }
 
+        var isConstrained = false
+        if #available(iOS 13.0, *) {
+            isConstrained = path.isConstrained
+        }
+
         let details: [String: Any] = [
-            "isConstrained": path.isConstrained,
+            "isConstrained": isConstrained,
             "supportsDNS": path.supportsDNS,
             "supportsIPv4": path.supportsIPv4,
             "supportsIPv6": path.supportsIPv6
