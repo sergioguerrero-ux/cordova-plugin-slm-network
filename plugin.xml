@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="cordova-plugin-slm-network"
+        version="1.0.0">
+
+    <name>SLM Network</name>
+    <description>Monitoreo de conectividad de red (NWPathMonitor / ConnectivityManager)</description>
+    <license>MIT</license>
+    <keywords>network,connectivity,wifi,cellular,monitor</keywords>
+
+    <engines>
+        <engine name="cordova" version=">=8.0.0" />
+        <engine name="cordova-android" version=">=9.0.0" />
+        <engine name="cordova-ios" version=">=6.0.0" />
+    </engines>
+
+    <js-module src="www/SLMNetwork.js" name="SLMNetwork">
+        <clobbers target="SLMNetwork" />
+    </js-module>
+
+    <!-- iOS -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="SLMNetwork">
+                <param name="ios-package" value="SLMNetwork" />
+            </feature>
+        </config-file>
+
+        <source-file src="src/ios/SLMNetwork.swift" />
+
+        <framework src="Network.framework" />
+
+        <preference name="SWIFTVERSION" default="5.0" />
+    </platform>
+
+    <!-- Android -->
+    <platform name="android">
+        <config-file target="res/xml/config.xml" parent="/*">
+            <feature name="SLMNetwork">
+                <param name="android-package" value="com.slm.network.SLMNetwork" />
+            </feature>
+        </config-file>
+
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+            <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+        </config-file>
+
+        <source-file src="src/android/SLMNetwork.java" target-dir="src/com/slm/network" />
+    </platform>
+
+</plugin>

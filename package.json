@@ -1,0 +1,26 @@
+{
+  "name": "cordova-plugin-slm-network",
+  "version": "1.0.0",
+  "description": "Monitoreo de conectividad de red (NWPathMonitor / ConnectivityManager)",
+  "cordova": {
+    "id": "cordova-plugin-slm-network",
+    "platforms": ["android", "ios"]
+  },
+  "keywords": [
+    "cordova",
+    "network",
+    "connectivity",
+    "wifi",
+    "cellular",
+    "monitor",
+    "ecosystem:cordova",
+    "cordova-android",
+    "cordova-ios"
+  ],
+  "author": "Sergio Guerrero M <sergio.guerrero@slm.cloud>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sergioguerrero-ux/cordova-plugin-slm-network.git"
+  }
+}
